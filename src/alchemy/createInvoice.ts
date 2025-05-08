@@ -1,3 +1,4 @@
+import { invoiceInput } from '@interfaces/index';
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 
@@ -9,6 +10,14 @@ const testCerPEM = '-----BEGIN CERTIFICATE-----\nMIIFsDCCA5igAwIBAgIUMzAwMDEwMDA
 
 const testData64 = 'ewoJIkNvbXByb2JhbnRlIjogewoJICAgICJWZXJzaW9uIjogIjQuMCIsCgkgICAgIlNlcmllIjogIkxDLUoiLAoJICAgICJGb2xpbyI6ICJMQy0xMDAwNTAxMTEwMCIsCgkgICAgIkZlY2hhIjogIjIwMjUtMDUtMDRUMjI6MzE6MTciLAoJICAgICJOb0NlcnRpZmljYWRvIjogIjMwMDAxMDAwMDAwNTAwMDAzNDE2IiwKCSAgICAiU3ViVG90YWwiOiAiNDUwMC4wMCIsCiAgICAJIkRlc2N1ZW50byI6ICIwLjAwIiwKCSAgICAiTW9uZWRhIjogIk1YTiIsCgkgICAgIlRvdGFsIjogIjUyMjAuMDAiLAoJICAgICJUaXBvRGVDb21wcm9iYW50ZSI6ICJFIiwKCQkiRm9ybWFQYWdvIjogIjAxIiwKCSAgICAiTWV0b2RvUGFnbyI6ICJQVUUiLAoJICAgICJFeHBvcnRhY2lvbiI6IjAxIiwKCSAgICAiTHVnYXJFeHBlZGljaW9uIjogIjI2MDE1IiwKCSAgICAiQ2ZkaVJlbGFjaW9uYWRvcyI6IHsKCSAgICAgICJUaXBvUmVsYWNpb24iOiAiMDciLAoJICAgICAgIkNmZGlSZWxhY2lvbmFkbyI6IFsKCSAgICAgICAgIkZGRkZGRkZGLTA1NTktNDE5RS1COUZELUQwNkZGNEVGOUNBQiIKCSAgICAgICAgXQoJICAgIH0sCgkgICAgIkVtaXNvciI6CgkgICAgewoJICAgICAgICAiUmZjIjogIkVLVTkwMDMxNzNDOSIsCgkgICAgICAgICJOb21icmUiOiAiRVNDVUVMQSBLRU1QRVIgVVJHQVRFIiwKCSAgICAgICAgIlJlZ2ltZW5GaXNjYWwiOiAiNjAxIgoJICAgIH0sCgkgICAgIlJlY2VwdG9yIjoKCSAgICB7CgkgICAgICAgICJSZmMiOiAiWEFYWDAxMDEwMTAwMCIsCgkgICAgICAgICJOb21icmUiOiAiWEVOT04gSU5EVVNUUklBTCBBUlRJQ0xFUyIsCgkgICAgICAgICJVc29DRkRJIjogIkcwMyIsCgkgICAgICAgICJEb21pY2lsaW9GaXNjYWxSZWNlcHRvciI6IjI2MDE1IiwKCSAgICAgICAgIlJlZ2ltZW5GaXNjYWxSZWNlcHRvciI6IjYxNiIsCgkgICAgICAgICJVc29DRkRJIjogIlMwMSIKCSAgICB9LAoJICAgICJDb25jZXB0b3MiOgoJICAgIFsKCSAgICAgICAgewoJICAgICAgICAgICAgIkNsYXZlUHJvZFNlcnYiOiAiODQxMTE1MDYiLAoJICAgICAgICAgICAgIkNhbnRpZGFkIjogIjEuMCIsCgkgICAgICAgICAgICAiQ2xhdmVVbmlkYWQiOiAiQUNUIiwKICAgICAgICAJCSJVbmlkYWQiOiAiQWN0aXZpZGFkIiwKCSAgICAgICAgICAgICJEZXNjcmlwY2lvbiI6ICJOT1RBIERFIENSRURJVE8gUE9SIEFQTElDQUNJT04gREUgQU5USUNJUE8gRkFDVDogNjc5MTUxIiwKCSAgICAgICAgICAgICJWYWxvclVuaXRhcmlvIjogIjQ1MDAuMDAiLAoJICAgICAgICAgICAgIkltcG9ydGUiOiAiNDUwMC4wMCIsCgkgICAgICAgICAgICAiRGVzY3VlbnRvIjogIjAuMDAiLAoJICAgICAgICAgICAgIk9iamV0b0ltcCI6IjAyIiwKCSAgICAgICAgICAgICJJbXB1ZXN0b3MiOgoJICAgICAgICAgICAgewoJICAgICAgICAgICAgICAgICJUcmFzbGFkb3MiOgoJICAgICAgICAgICAgICAgIFsKCSAgICAgICAgICAgICAgICAgICAgewoJICAgICAgICAgICAgICAgICAgICAgICAgIkJhc2UiOiAiNDUwMC4wMCIsCgkgICAgICAgICAgICAgICAgICAgICAgICAiSW1wdWVzdG8iOiAiMDAyIiwKCSAgICAgICAgICAgICAgICAgICAgICAgICJUaXBvRmFjdG9yIjogIlRhc2EiLAoJICAgICAgICAgICAgICAgICAgICAgICAgIlRhc2FPQ3VvdGEiOiAiMC4xNjAwMDAiLAoJICAgICAgICAgICAgICAgICAgICAgICAgIkltcG9ydGUiOiAiNzIwLjAwIgoJICAgICAgICAgICAgICAgICAgICB9CgkgICAgICAgICAgICAgICAgXQoJICAgICAgICAgICAgfQoJICAgICAgICB9CgkgICAgXSwKCSAgICAiSW1wdWVzdG9zIjoKCSAgICB7CgkgICAgICAgICJUb3RhbEltcHVlc3Rvc1RyYXNsYWRhZG9zIjogIjcyMC4wMCIsCgkgICAgICAgICJUcmFzbGFkb3MiOgoJICAgICAgICBbCgkgICAgICAgICAgICB7CgkgICAgICAgICAgICAJIkJhc2UiOiI0NTAwLjAwIiwKCSAgICAgICAgICAgICAgICAiSW1wdWVzdG8iOiAiMDAyIiwKCSAgICAgICAgICAgICAgICAiVGlwb0ZhY3RvciI6ICJUYXNhIiwKCSAgICAgICAgICAgICAgICAiVGFzYU9DdW90YSI6ICIwLjE2MDAwMCIsCgkgICAgICAgICAgICAgICAgIkltcG9ydGUiOiAiNzIwLjAwIgoJICAgICAgICAgICAgfQoJICAgICAgICBdCgkgICAgfQoJfSwKCSJDYW1wb3NQREYiOiB7CiAgICAidGlwb0NvbXByb2JhbnRlIjogIk5PVEEgREUgQ1LDiURJVE8iLAogICAgIkNvbWVudGFyaW9zIjogIk5pbmd1bm8iCiAgfSwKICAibG9nbyIgOiAiIgp9';
 
+
+function obj2B64(baseObj: object){
+    let objJSON = JSON.stringify(baseObj);
+    let objB64 = Buffer.from(objJSON).toString('base64');
+
+    //console.log(`---------- Original Obj:\n     ${baseObj}\n---------- JSON Obj:\n     ${objJSON}\n---------- Obj. in Base64:\n     ${objB64}`);
+    return objB64;
+}
 
 
 
@@ -46,6 +55,63 @@ async function facturaloTimbrarJSON3HC(apiKey:string, data:string, keyP:string, 
         throw new Error(`External API error: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
+
+
+
+
+
+
+
+
+
+
+export async function facturar1( {pp, input}: {pp:string, input:invoiceInput}) {
+
+    
+    switch (pp) {
+        case 'facturalo':
+            console.log(`\n U're using Facturalo`);
+
+            let facturaloInput: invoiceInput = {
+                serie: input.serie,
+                folio: input.folio,
+                fecha: input.fecha,
+                noCertificado: input.noCertificado,
+                subTotal: input.subTotal,
+                descuento: input.descuento,
+                moneda: input.moneda,
+                total: input.total,
+                tipoComprobante: input.tipoComprobante,
+                formaPago: input.formaPago,
+                metodoPago: input.metodoPago,
+                exportacion: input.exportacion,
+                lugarExpedicion: input.lugarExpedicion,
+                emisor: input.emisor,
+                receptor: input.receptor,
+                cfdiRelacionados: input.cfdiRelacionados,
+                conceptos: input.conceptos,
+                impuestos: input.impuestos
+            }
+
+            let data64 = obj2B64(facturaloInput);
+
+            //facturaloTimbrarJSON3(testApiKey, data64, testKeyPEM, testCerPEM);
+
+
+            break;
+        case 'codi':
+            console.log(`\n U're using Codi`);
+            break;
+        default:
+            console.log(`\n U're using a unknown value`);
+            break;
+    }
+
+}
+
+
+
+
 
 
 
