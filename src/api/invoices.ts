@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { TestRequest, ReceiverInvoice } from '../interfaces';
-import { facturar } from '../alchemy/createInvoice';
+import { TestRequest, ReceiverInvoice, userInput } from '../interfaces';
+import { facturar, facturar1, facturarDef } from '../alchemy/createInvoice';
 
 const router = Router();
 
@@ -39,17 +39,47 @@ router.post('/facturar', async (req:any, res:any) => {
 
 
     res.json({
+        payment_processor: pp,
         name: name,
         rfc: rfc,
         email: email,
-        finalData: result
+        postalCode: pc,
+        cfdi: cfdi,
+        folio: folio,
+        invoiceData: result
+    });
+
+});
+
+router.post('/facturar1', async (req:any, res:any) => {
+    const {pp, input} = req.body as userInput;
+
+
+    let result = await facturar1(pp, input);
+
+
+    res.json({
+        payment_processor: pp,
+        invoiceData: result
     });
 
 });
 
 
 
+router.post('/facturar-def', async (req:any, res:any) => {
+    
+    const imProfile = req.headers['x-im-profile-id'] as string; // Invoice Manager Profile
+    const {input} = req.body as userInput;
 
+    let result = await facturarDef(imProfile, input);
+
+    res.json({
+        payment_processor: imProfile,
+        invoiceData: result
+    });
+
+});
 
 
 
