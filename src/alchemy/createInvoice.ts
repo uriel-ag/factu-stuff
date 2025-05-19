@@ -4,6 +4,7 @@ import { profile } from 'console';
 import { parseStringPromise } from 'xml2js';
 import { promises as fs } from 'fs';
 
+const xml2js = require('xml2js');
 const path = require('path');
 
 const testApiKey = '93edc4af66b84c938f66a56ca0596205';
@@ -15,6 +16,11 @@ const testCerPEM = '-----BEGIN CERTIFICATE-----\nMIIFsDCCA5igAwIBAgIUMzAwMDEwMDA
 const testData64 = 'ewoJIkNvbXByb2JhbnRlIjogewoJICAgICJWZXJzaW9uIjogIjQuMCIsCgkgICAgIlNlcmllIjogIkxDLUoiLAoJICAgICJGb2xpbyI6ICJMQy0xMDAwNSIsCgkgICAgIkZlY2hhIjogIjIwMjUtMDUtMDZUMjI6MzE6MTciLAoJICAgICJOb0NlcnRpZmljYWRvIjogIjMwMDAxMDAwMDAwNTAwMDAzNDE2IiwKCSAgICAiU3ViVG90YWwiOiAiNDUwMC4wMCIsCiAgICAJIkRlc2N1ZW50byI6ICIwLjAwIiwKCSAgICAiTW9uZWRhIjogIk1YTiIsCgkgICAgIlRvdGFsIjogIjUyMjAuMDAiLAoJICAgICJUaXBvRGVDb21wcm9iYW50ZSI6ICJFIiwKCQkiRm9ybWFQYWdvIjogIjAxIiwKCSAgICAiTWV0b2RvUGFnbyI6ICJQVUUiLAoJICAgICJFeHBvcnRhY2lvbiI6IjAxIiwKCSAgICAiTHVnYXJFeHBlZGljaW9uIjogIjI2MDE1IiwKCSAgICAiQ2ZkaVJlbGFjaW9uYWRvcyI6IHsKCSAgICAgICJUaXBvUmVsYWNpb24iOiAiMDciLAoJICAgICAgIkNmZGlSZWxhY2lvbmFkbyI6IFsKCSAgICAgICAgIkZGRkZGRkZGLTA1NTktNDE5RS1COUZELUQwNkZGNEVGOUNBQiIKCSAgICAgICAgXQoJICAgIH0sCgkgICAgIkVtaXNvciI6CgkgICAgewoJICAgICAgICAiUmZjIjogIkVLVTkwMDMxNzNDOSIsCgkgICAgICAgICJOb21icmUiOiAiRVNDVUVMQSBLRU1QRVIgVVJHQVRFIiwKCSAgICAgICAgIlJlZ2ltZW5GaXNjYWwiOiAiNjAxIgoJICAgIH0sCgkgICAgIlJlY2VwdG9yIjoKCSAgICB7CgkgICAgICAgICJSZmMiOiAiWEFYWDAxMDEwMTAwMCIsCgkgICAgICAgICJOb21icmUiOiAiWEVOT04gSU5EVVNUUklBTCBBUlRJQ0xFUyIsCgkgICAgICAgICJVc29DRkRJIjogIkcwMyIsCgkgICAgICAgICJEb21pY2lsaW9GaXNjYWxSZWNlcHRvciI6IjI2MDE1IiwKCSAgICAgICAgIlJlZ2ltZW5GaXNjYWxSZWNlcHRvciI6IjYxNiIsCgkgICAgICAgICJVc29DRkRJIjogIlMwMSIKCSAgICB9LAoJICAgICJDb25jZXB0b3MiOgoJICAgIFsKCSAgICAgICAgewoJICAgICAgICAgICAgIkNsYXZlUHJvZFNlcnYiOiAiODQxMTE1MDYiLAoJICAgICAgICAgICAgIkNhbnRpZGFkIjogIjEuMCIsCgkgICAgICAgICAgICAiQ2xhdmVVbmlkYWQiOiAiQUNUIiwKICAgICAgICAJCSJVbmlkYWQiOiAiQWN0aXZpZGFkIiwKCSAgICAgICAgICAgICJEZXNjcmlwY2lvbiI6ICJOT1RBIERFIENSRURJVE8gUE9SIEFQTElDQUNJT04gREUgQU5USUNJUE8gRkFDVDogNjc5MTUxIiwKCSAgICAgICAgICAgICJWYWxvclVuaXRhcmlvIjogIjQ1MDAuMDAiLAoJICAgICAgICAgICAgIkltcG9ydGUiOiAiNDUwMC4wMCIsCgkgICAgICAgICAgICAiRGVzY3VlbnRvIjogIjAuMDAiLAoJICAgICAgICAgICAgIk9iamV0b0ltcCI6IjAyIiwKCSAgICAgICAgICAgICJJbXB1ZXN0b3MiOgoJICAgICAgICAgICAgewoJICAgICAgICAgICAgICAgICJUcmFzbGFkb3MiOgoJICAgICAgICAgICAgICAgIFsKCSAgICAgICAgICAgICAgICAgICAgewoJICAgICAgICAgICAgICAgICAgICAgICAgIkJhc2UiOiAiNDUwMC4wMCIsCgkgICAgICAgICAgICAgICAgICAgICAgICAiSW1wdWVzdG8iOiAiMDAyIiwKCSAgICAgICAgICAgICAgICAgICAgICAgICJUaXBvRmFjdG9yIjogIlRhc2EiLAoJICAgICAgICAgICAgICAgICAgICAgICAgIlRhc2FPQ3VvdGEiOiAiMC4xNjAwMDAiLAoJICAgICAgICAgICAgICAgICAgICAgICAgIkltcG9ydGUiOiAiNzIwLjAwIgoJICAgICAgICAgICAgICAgICAgICB9CgkgICAgICAgICAgICAgICAgXQoJICAgICAgICAgICAgfQoJICAgICAgICB9CgkgICAgXSwKCSAgICAiSW1wdWVzdG9zIjoKCSAgICB7CgkgICAgICAgICJUb3RhbEltcHVlc3Rvc1RyYXNsYWRhZG9zIjogIjcyMC4wMCIsCgkgICAgICAgICJUcmFzbGFkb3MiOgoJICAgICAgICBbCgkgICAgICAgICAgICB7CgkgICAgICAgICAgICAJIkJhc2UiOiI0NTAwLjAwIiwKCSAgICAgICAgICAgICAgICAiSW1wdWVzdG8iOiAiMDAyIiwKCSAgICAgICAgICAgICAgICAiVGlwb0ZhY3RvciI6ICJUYXNhIiwKCSAgICAgICAgICAgICAgICAiVGFzYU9DdW90YSI6ICIwLjE2MDAwMCIsCgkgICAgICAgICAgICAgICAgIkltcG9ydGUiOiAiNzIwLjAwIgoJICAgICAgICAgICAgfQoJICAgICAgICBdCgkgICAgfQoJfSwKCSJDYW1wb3NQREYiOiB7CiAgICAidGlwb0NvbXByb2JhbnRlIjogIk5PVEEgREUgQ1LDiURJVE8iLAogICAgIkNvbWVudGFyaW9zIjogIk5pbmd1bm8iCiAgfSwKICAibG9nbyIgOiAiIgp9';
 
 
+
+
+/* ============================================================
+    Takes a JSON obj and converts it to a b64 string.
+   ========================================================= */
 function obj2B64(baseObj: object){
     let objJSON = JSON.stringify(baseObj, null, 4);
 
@@ -42,6 +48,78 @@ function obj2B64(baseObj: object){
     //console.log(`---------- Original Obj:\n     ${baseObj}\n---------- JSON Obj:\n     ${objJSON}\n---------- Obj. in Base64:\n     ${objB64}`);
     return objB64;
 }
+
+
+function str2XML(baseStr: string) {
+    try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(baseStr, 'text/xml');
+        const parseError = xmlDoc.getElementsByTagName('parsererror');
+        if (parseError.length > 0) {
+            throw new Error ('Invalid XML');
+        }
+        return xmlDoc;
+    } catch (e) {
+        console.log(`Message: ${e}`);
+        return ({
+            error: "There was a problem trying to parse the XML",
+            message: e
+        });
+    } 
+}
+
+
+
+
+/* ============================================================
+    Sometimes the data is returned into a string that contains 
+    a XML; this function takes that string and works it returning
+    a JSON object with the data. 
+   ========================================================= */
+async function strXML2JSON(baseStr: string) {
+    try {
+        const jsonData = JSON.parse(baseStr);
+        const xmlString = jsonData.XML.replace(/\\"/g, '"').replace(/\\\//g, '/');
+
+        const parser = new xml2js.Parser({
+            explicitArray: false,
+            ignoreAttrs: false,
+            tagNameProcessors: [(name: string) => name.replace('cfdi:', '')]
+        });
+        
+        const xmlJson = await parser.parseStringPromise(xmlString);
+
+        const result = {
+            comprobante: xmlJson.Comprobante,
+            metadata: {
+                UUID: jsonData.UUID,
+                FechaTimbrado: jsonData.FechaTimbrado,
+                NoCertificado: jsonData.NoCertificado,
+                NoCertificadoSAT: jsonData.NoCertificadoSAT,
+                Sello: jsonData.Sello,
+                SelloSAT: jsonData.SelloSAT,
+                CodigoQR: jsonData.CodigoQR,
+                CadenaOriginal: jsonData.CadenaOriginal,
+                CadenaOriginalSAT: jsonData.CadenaOriginalSAT
+            }
+        };
+
+        return result;
+    } catch (e) {
+        console.error(`Error in strXML2JSON:`, e);
+        return {
+            error: "Failed to process invoice data",
+            message: e instanceof Error ? e.message : String(e)
+        };
+    }
+}
+
+
+
+
+
+
+
 
 
 
@@ -115,7 +193,12 @@ async function facturaloTimbrarJSON3HC(apiKey:string, data:string, keyP:string, 
 }
 
 
-// ...........................................................
+
+
+/* ============================================================
+    Inner function that takes the Invoice Manager profile
+    and extracts the data.
+   ========================================================= */
 async function breakDownIMProfile(imProfile: string) {
 
     // Status:
@@ -162,7 +245,10 @@ async function breakDownIMProfile(imProfile: string) {
 
 
 
-// ................................................................
+/* ============================================================
+    This function takes the introduced data and runs it by the
+    Facturalo endpoint to get the correct data.
+   ========================================================= */
 async function facturaloTimbrarJSONFull(apiKey: string, keyP: string, cerP: string, fullInput: any): Promise <any> {
 
     const bgURL = 'https://dev.facturaloplus.com/api/rest/servicio/timbrarJSON3';
@@ -205,7 +291,9 @@ async function facturaloTimbrarJSONFull(apiKey: string, keyP: string, cerP: stri
 
 
 
-
+/* ============================================================
+    Takes a JSON obj and converts it to a b64 string.
+   ========================================================= */
 export async function facturarDef(imProfile: string, input: invoiceInput) {
 
     // Validate the token is valid
@@ -219,8 +307,27 @@ export async function facturarDef(imProfile: string, input: invoiceInput) {
 
                     console.log(`\n Object Found: \n ${JSON.stringify(profileFound)} \n\n`);
 
-                    let factura = facturaloTimbrarJSONFull(profileFound.apiKey, profileFound.keyPEM, profileFound.cerPEM, input);
-                    /*if ("error" in factura) {}*/ 
+                    let factura: any = await facturaloTimbrarJSONFull(profileFound.apiKey, profileFound.keyPEM, profileFound.cerPEM, input);
+
+                    if (!("error" in factura)) {
+                        console.log(' NO ERROR -----------------------');
+                        if (("data" in factura)) {
+                            factura.dataJSON = await strXML2JSON(factura.data);
+                            
+                            switch(factura.code) {
+                                case('307'):
+                                    factura.condicion = '02';
+                                    break;
+                                case('200'):
+                                    factura.condicion = '01';
+                                    break;
+                                default:
+                                    factura.condicion = '00';
+                            }
+
+                        }
+                    }
+
                     return factura;
                     break;
                 case 'codi':
@@ -333,8 +440,6 @@ export async function facturar1( pp: string, input: invoiceInput) {
 
 
 export async function facturar( name:string, rfc:string, pc:string, email:string, cfdi:string, folio:string, pp:string){
-    
-
     switch (pp) {
         case 'facturalo':
             //return facturaloTimbrarJSON3(testApiKey, testData64, testKeyPEM, testCerPEM);
@@ -348,8 +453,6 @@ export async function facturar( name:string, rfc:string, pc:string, email:string
         default:
             return ('This is an unknown value');
     }
-
-
 }
 
 
